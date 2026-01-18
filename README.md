@@ -1,6 +1,5 @@
 # 🚀 Digital Inventory System (5-Tier Architecture)
-
-A digital inventory management system implemented using a **five-tier microservices architecture**. This project demonstrates scalable deployment patterns, distributed security coordination and containerized microservices.
+A simple digital inventory management system implemented using a five-tier microservices architecture. Built with HTML5, CSS3, and Vanilla JavaScript for the responsive frontend and Node.js (Express) for both the Backend and Auth services. This project demonstrates scalable deployment patterns, distributed security coordination via Redis and containerized microservices.
 
 ---
 
