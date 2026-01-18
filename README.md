@@ -6,7 +6,7 @@ A professional-grade inventory management system implemented using a **five-tier
 
 ## 🏗 System Architecture Diagram
 
-
+![](/images/img01.jpg)
 
 ---
 
