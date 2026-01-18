@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: dev
+  labels:
+    env: development
+    project: dg-inventory
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: inventory-secrets
+  namespace: dev
+type: Opaque
+stringData:
+  # Redis Configuration
+  REDIS_PASSWORD: "redis-password"
+
+  # MongoDB Credentials 
+  MONGO_ROOT_USER: "admin"
+  MONGO_ROOT_PASSWORD: "password"
+
+  # Connection String (Internal Cluster DNS)
+  # Note: 'mongodb' matches the Service name 
+  MONGO_URI: "mongodb-uri"

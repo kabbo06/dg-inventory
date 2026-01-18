@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: prod
+  labels:
+    env: production
+    project: dg-inventory
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: inventory-secrets
+  namespace: prod
+type: Opaque
+stringData:
+  # Redis Password (Keep it strong for Prod)
+  REDIS_PASSWORD: "redis-password"
+
+  # MongoDB Atlas Connection String
+  # We use the full URI you provided
+  MONGO_URI: "mongodb+srv uri"

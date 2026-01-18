@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro-Inventory | Universal MongoDB Edition</title>
+    <style>
+        :root { --primary: #2563eb; --sidebar: #ffffff; --bg: #f1f5f9; --text: #1e293b; }
+        body { font-family: system-ui, -apple-system, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; background: var(--bg); color: var(--text); }
+        .sidebar { width: 320px; background: var(--sidebar); border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; }
+        .search-area { padding: 20px; border-bottom: 1px solid #e2e8f0; }
+        .product-list { flex: 1; overflow-y: auto; }
+        .item-card { padding: 15px; border-bottom: 1px solid #f1f5f9; cursor: pointer; transition: 0.2s; }
+        .item-card:hover { background: #f8fafc; border-left: 4px solid var(--primary); }
+        .main { flex: 1; padding: 40px; overflow-y: auto; }
+        .form-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 800px; margin: auto; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        label { font-weight: 600; font-size: 0.85rem; color: #475569; display: block; margin-bottom: 5px; }
+        .btn { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger { background: #ef4444; color: white; }
+        .settings-area { padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+        #auth-gate { position: fixed; inset: 0; background: white; z-index: 100; display: flex; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body>
+
+<div id="auth-gate">
+    <div style="width: 300px; text-align: center;">
+        <h2 style="margin-bottom: 20px;">Inventory Login</h2>
+        <input type="password" id="login-pass" placeholder="Password (admin)" style="margin-bottom: 10px;">
+        <button onclick="login()" class="btn btn-primary" style="width:100%;">Access System</button>
+        <p id="login-err" style="color: #ef4444; font-size: 0.85rem; margin-top: 10px; min-height: 1.2em;"></p>
+    </div>
+</div>
+
+<div class="sidebar">
+    <div class="search-area">
+        <button onclick="resetForm()" class="btn btn-primary" style="width:100%; margin-bottom:15px;">+ New Item</button>
+        <input type="text" id="search" placeholder="Search inventory..." oninput="fetchItems()">
+    </div>
+    <div id="product-list" class="product-list"></div>
+    <div class="settings-area">
+        <label>Change Admin Password</label>
+        <input type="password" id="new-p" placeholder="New Password" style="font-size: 0.8rem; margin-bottom: 8px;">
+        <button onclick="updatePw()" class="btn" style="width:100%; font-size: 0.8rem; background: #64748b; color: white;">Update</button>
+        <button onclick="logout()" style="width:100%; background: none; border: none; font-size: 0.75rem; color: #ef4444; cursor:pointer; margin-top: 15px;">Logout</button>
+    </div>
+</div>
+
+<div class="main">
+    <div class="form-card">
+        <h2 id="form-title" style="margin-top:0;">New Product</h2>
+        <div class="grid">
+            <div style="grid-column: span 2;"><label>Product Name</label><input type="text" id="p-name"></div>
+            <div><label>Quantity in Stock</label><input type="number" id="p-qty" oninput="calculate()"></div>
+            <div><label>Retail Price ($)</label><input type="number" id="p-retail" oninput="calculate()"></div>
+            <div><label>Cost Price ($)</label><input type="number" id="p-cost"></div>
+            <div><label>Total Inventory Value</label><input type="text" id="p-total" readonly style="background:#f1f5f9; font-weight: bold;"></div>
+            <div style="grid-column: span 2;"><label>Description</label><textarea id="p-desc" rows="3"></textarea></div>
+        </div>
+        <div style="margin-top:25px; display:flex; gap:10px;">
+            <button onclick="save()" class="btn btn-primary">Save Product</button>
+            <button id="del-btn" onclick="remove()" class="btn btn-danger" style="display:none;">Delete Item</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let activeId = null;
+    const getHeaders = () => ({
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+    });
+
+    window.onload = () => { 
+        if(localStorage.getItem('token')) { 
+            document.getElementById('auth-gate').style.display='none'; 
+            fetchItems(); 
+        } 
+    };
+
+    async function login() {
+        const errEl = document.getElementById('login-err');
+        errEl.innerText = "";
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username: 'admin', password: document.getElementById('login-pass').value})
+            });
+            const data = await res.json();
+            if(data.token) { 
+                localStorage.setItem('token', data.token); 
+                location.reload(); 
+            } else { 
+                errEl.innerText = data.error || "Login failed"; 
+            }
+        } catch (e) {
+            errEl.innerText = "System starting... please wait.";
+        }
+    }
+
+    async function fetchItems() {
+        try {
+            const q = document.getElementById('search').value;
+            const res = await fetch(`/api/products/?search=${q}`, { headers: getHeaders() });
+            
+            if (res.status === 403) return logout();
+            if (res.status === 503) {
+                document.getElementById('product-list').innerHTML = "<p style='padding:20px'>System initializing...</p>";
+                return setTimeout(fetchItems, 3000);
+            }
+
+            const items = await res.json();
+            document.getElementById('product-list').innerHTML = items.map(i => `
+                <div class="item-card" onclick='selectItem(${JSON.stringify(i)})'>
+                    <b>${i.name}</b><br>
+                    <small style="color:#64748b">Stock: ${i.quantity} | $${i.retail_price}</small>
+                </div>
+            `).join('');
+        } catch (e) {
+            console.error("Fetch error", e);
+        }
+    }
+
+    function selectItem(i) {
+        // MONGODB CHANGE: Use _id instead of id
+        activeId = i._id; 
+        document.getElementById('form-title').innerText = "Edit Item";
+        document.getElementById('p-name').value = i.name;
+        document.getElementById('p-qty').value = i.quantity;
+        document.getElementById('p-retail').value = i.retail_price;
+        document.getElementById('p-cost').value = i.cost_price;
+        document.getElementById('p-desc').value = i.description;
+        document.getElementById('del-btn').style.display = 'block';
+        calculate();
+    }
+
+    function calculate() {
+        const q = document.getElementById('p-qty').value || 0;
+        const r = document.getElementById('p-retail').value || 0;
+        document.getElementById('p-total').value = `$ ${(q * r).toFixed(2)}`;
+    }
+
+    function resetForm() {
+        activeId = null;
+        document.getElementById('form-title').innerText = "New Product";
+        document.querySelectorAll('.form-card input, .form-card textarea').forEach(el => el.value = '');
+        document.getElementById('del-btn').style.display = 'none';
+        calculate();
+    }
+
+    async function save() {
+        const payload = {
+            name: document.getElementById('p-name').value,
+            quantity: parseInt(document.getElementById('p-qty').value) || 0,
+            retail_price: parseFloat(document.getElementById('p-retail').value) || 0,
+            cost_price: parseFloat(document.getElementById('p-cost').value) || 0,
+            description: document.getElementById('p-desc').value
+        };
+        const method = activeId ? 'PUT' : 'POST';
+        const url = activeId ? `/api/products/${activeId}` : '/api/products/';
+        
+        const res = await fetch(url, { method, headers: getHeaders(), body: JSON.stringify(payload) });
+        if(res.ok) {
+            fetchItems(); 
+            resetForm();
+        } else {
+            alert("Session expired or invalid data.");
+        }
+    }
+
+    async function remove() {
+        if(confirm("Delete this item permanently?")) {
+            const res = await fetch(`/api/products/${activeId}`, { method: 'DELETE', headers: getHeaders() });
+            if(res.ok) {
+                fetchItems(); 
+                resetForm();
+            }
+        }
+    }
+
+    async function updatePw() {
+        const newPassword = document.getElementById('new-p').value;
+        if(!newPassword) return alert("Enter a new password");
+        const res = await fetch('/api/auth/change-password', { 
+            method: 'POST', 
+            headers: getHeaders(), 
+            body: JSON.stringify({ username: 'admin', newPassword }) 
+        });
+        if(res.ok) {
+            alert("Password Updated! Please login again.");
+            logout();
+        }
+    }
+
+    function logout() { localStorage.removeItem('token'); location.reload(); }
+</script>
+</body>
+</html>
+
