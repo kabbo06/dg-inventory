@@ -1,11 +1,25 @@
-# 🚀 Digital Inventory System (5-Tier Architecture)
-A simple digital inventory management system implemented using a five-tier microservices architecture. Built with HTML5, CSS3, and Vanilla JavaScript for the responsive frontend and Node.js (Express) for both the Backend and Auth services. This project demonstrates scalable deployment patterns, distributed security coordination via Redis and containerized microservices.
+# 🚀 digital inventory management system implemented using a **five-tier microservices architecture**. 
+
+This project utilizes **HTML5, CSS3, and Vanilla JavaScript** for the lightweight presentation layer, while **Node.js (Express)** powers both the Identity and Business Logic tiers. The architecture demonstrates scalable deployment patterns and distributed security coordination via a shared-secret pattern. To ensure enterprise readiness, the application provides full deployment support for both **Docker Compose** (for rapid local development) and **Kubernetes** (for production-grade orchestration).
 
 ---
 
 ## 🏗 System Architecture Diagram
 
+<div align="center">
+
 ![](/images/img01.jpg)
+
+</div>
+
+---
+
+## 📂 Project Structure
+* `/frontend`: Nginx configuration and Vanilla JS web interface.
+* `/auth`: Node.js identity provider service.
+* `/backend`: Node.js inventory management API.
+* `docker-compose.yml`: Allows developers to spin up the entire 5-tier stack—including local MongoDB and Redis instances—with a single command. It uses a `.env` file for easy configuration of credentials and connection strings.
+* `/k8s`: Kubernetes manifest files for deployments and services.
 
 ---
 
