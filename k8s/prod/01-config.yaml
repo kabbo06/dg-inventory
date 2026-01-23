@@ -12,7 +12,7 @@ metadata:
   name: application-config
   namespace: prod
 data:
-  SERVER_NAME: "inventory.example.com"
+  SERVER_NAME: "inventory.example.com" # Kustomize will replace this
 ---
 apiVersion: v1
 kind: Secret

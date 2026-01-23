@@ -1,0 +1,30 @@
+## Edit server FQDN here
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# List all your existing files here
+resources:
+  - 01-config.yaml
+  - 03-infra.yaml
+  - 04-apps.yaml
+  - 05-ingress.yaml
+  - 06-hpa.yaml
+  - 07-network-policy.yaml
+
+# Replace SERVER_NAME in ConfigMap and Ingress.
+patches:
+  - target:
+      kind: Ingress
+      name: inventory-ingress
+    patch: |-
+      - op: replace
+        path: /spec/rules/0/host
+        value: "inventory.example.com"
+  - target:
+      kind: ConfigMap
+      name: application-config
+    patch: |-
+      - op: replace
+        path: /data/SERVER_NAME
+        value: "inventory.example.com"
