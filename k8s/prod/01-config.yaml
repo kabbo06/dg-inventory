@@ -7,6 +7,14 @@ metadata:
     project: dg-inventory
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: application-config
+  namespace: prod
+data:
+  SERVER_NAME: "inventory.example.com"
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: inventory-secrets
@@ -18,4 +26,4 @@ stringData:
 
   # MongoDB Atlas Connection String
   # We use the full URI you provided
-  MONGO_URI: "mongodb+srv uri"
+  MONGO_URI: "mongodb+srv URI"

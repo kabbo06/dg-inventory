@@ -7,6 +7,14 @@ metadata:
     project: dg-inventory
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: application-config
+  namespace: prod
+data:
+  SERVER_NAME: "inventory.example.com"
+---
+apiVersion: v1
 kind: Secret
 metadata:
   name: inventory-secrets
@@ -16,10 +24,10 @@ stringData:
   # Redis Configuration
   REDIS_PASSWORD: "redis-password"
 
-  # MongoDB Credentials 
+  # MongoDB Credentials
   MONGO_ROOT_USER: "admin"
   MONGO_ROOT_PASSWORD: "password"
 
   # Connection String (Internal Cluster DNS)
-  # Note: 'mongodb' matches the Service name 
-  MONGO_URI: "mongodb-uri"
+  # Note: 'mongodb' matches the Service name
+  MONGO_URI: "mongodb URI"

@@ -168,6 +168,12 @@ spec:
       - name: frontend
         image: kabbo06/inventory-frontend:v1
         imagePullPolicy: Always
+        env:
+        - name: SERVER_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: application-config
+              key: SERVER_NAME
         ports:
         - containerPort: 8080
         startupProbe:
@@ -185,5 +191,3 @@ spec:
         resources:
           limits: { memory: "128Mi", cpu: "200m" }
           requests: { memory: "64Mi", cpu: "50m" }
-
-

@@ -165,6 +165,12 @@ spec:
       - name: frontend
         image: kabbo06/inventory-frontend:v1
         imagePullPolicy: Always
+        env:
+        - name: SERVER_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: application-config
+              key: SERVER_NAME
         ports:
         - containerPort: 8080
         startupProbe:
