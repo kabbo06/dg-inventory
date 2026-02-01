@@ -1,0 +1,13 @@
+name: Simple Runner Test
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  test-connection:
+    runs-on: self-hosted
+    steps:
+      - name: Echo Hello World
+        run: echo "Hello! The self-hosted runner is active and working."
