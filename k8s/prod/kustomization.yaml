@@ -26,8 +26,17 @@ patches:
       - op: replace
         path: /spec/tls/0/hosts/0
         value: "prod.inventory.normalsite.com"
-        
-  # Update the ConfigMap (passed to Nginx SERVER_NAME)      
+
+  # Update Certificate DNS name
+  - target:
+      kind: Certificate
+      name: inventory-tls-cert
+    patch: |-
+      - op: replace
+        path: /spec/dnsNames/0
+        value: "prod.inventory.normalsite.com"
+
+  # Update the ConfigMap (passed to Nginx SERVER_NAME)
   - target:
       kind: ConfigMap
       name: application-config

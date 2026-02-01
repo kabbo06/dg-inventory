@@ -4,14 +4,26 @@ metadata:
   name: letsencrypt-prod
 spec:
   acme:
-    # The ACME server address for Let's Encrypt
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: kabbo1985@gmail.com
-    # Name of a secret used to store the ACME account private key
+    email: rakibul@mirinfosys.com
     privateKeySecretRef:
       name: letsencrypt-prod-account-key
-    # Enable the HTTP-01 challenge provider
     solvers:
     - http01:
         ingress:
-          class: nginx
+          ingressClassName: nginx
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: inventory-tls-cert
+  namespace: prod
+spec:
+  secretName: inventory-tls-secret
+  privateKey:
+    rotationPolicy: Always
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  dnsNames:
+  - inventory.example.com   # Kustomize will replace this

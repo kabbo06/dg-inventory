@@ -4,24 +4,21 @@ metadata:
   name: inventory-ingress
   namespace: prod
   annotations:
-    # Use the Nginx ingress controller
     nginx.ingress.kubernetes.io/rewrite-target: /
-    # NEW: Link this ingress to your Cert-Manager ClusterIssuer
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    # Optional: Force HTTPS redirect
+    # Force HTTPS redirect for security
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    kubernetes.io/ingress.class: "nginx"
 spec:
   ingressClassName: nginx
-  # NEW: TLS configuration (Cert-Manager uses this to request the certificate)
   tls:
     - hosts:
         - "inventory.example.com" # Kustomize will replace this
-      secretName: inventory-tls-secret # Cert-Manager will save the SSL cert here
+      secretName: inventory-tls-secret
   rules:
     - host: "inventory.example.com" # Kustomize will replace this
       http:
         paths:
-          # Frontend Route
           - path: /
             pathType: Prefix
             backend:
