@@ -1,42 +1,49 @@
 ## Edit server FQDN here
-
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-# List all your existing files here
+# Updated resources list: 05-ingress.yaml is removed, 05-gateway.yaml is added
 resources:
   - 01-config.yaml
   - 02-issuer.yaml
   - 03-infra.yaml
   - 04-apps.yaml
-  - 05-ingress.yaml
+  - 05-gateway.yaml
   - 06-hpa.yaml
   - 07-network-policy.yaml
 
-# Replace SERVER_NAME in ConfigMap and Ingress.
 patches:
-  # Update the Ingress Manifest
+  # 1. Update the Gateway Listeners
   - target:
-      kind: Ingress
-      name: inventory-ingress
+      kind: Gateway
+      name: inventory-gateway
     patch: |-
       - op: replace
-        path: /spec/rules/0/host
+        path: /spec/listeners/0/hostname
         value: "prod.inventory.normalsite.com"
       - op: replace
-        path: /spec/tls/0/hosts/0
+        path: /spec/listeners/1/hostname
         value: "prod.inventory.normalsite.com"
 
-  # Update Certificate DNS name
+  # 2. Update the HTTPS App Route
   - target:
-      kind: Certificate
-      name: inventory-tls-cert
+      kind: HTTPRoute
+      name: inventory-app-route
     patch: |-
       - op: replace
-        path: /spec/dnsNames/0
+        path: /spec/hostnames/0
         value: "prod.inventory.normalsite.com"
 
-  # Update the ConfigMap (passed to Nginx SERVER_NAME)
+  # 3. Update the HTTP Redirect Route
+  - target:
+      kind: HTTPRoute
+      name: http-to-https-redirect
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: "prod.inventory.normalsite.com"
+
+  # 4. Update the ConfigMap (passed to Nginx-frontend  SERVER_NAME)
   - target:
       kind: ConfigMap
       name: application-config

@@ -7,23 +7,10 @@ spec:
     server: https://acme-v02.api.letsencrypt.org/directory
     email: rakibul@mirinfosys.com
     privateKeySecretRef:
-      name: letsencrypt-prod-account-key
+      name: letsencrypt-prod
     solvers:
-    - http01:
-        ingress:
-          ingressClassName: nginx
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: inventory-tls-cert
-  namespace: prod
-spec:
-  secretName: inventory-tls-secret
-  privateKey:
-    rotationPolicy: Always
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-  dnsNames:
-  - inventory.example.com   # Kustomize will replace this
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: inventory-gateway
+                kind: Gateway

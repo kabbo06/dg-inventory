@@ -22,7 +22,7 @@ metadata:
 type: Opaque
 stringData:
   # Redis Password (Keep it strong for Prod)
-  REDIS_PASSWORD: "redis-password"
+  REDIS_PASSWORD: "redis password"
 
   # MongoDB Atlas Connection String
   # We use the full URI you provided

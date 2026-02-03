@@ -46,7 +46,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: envoy-gateway-system
+          kubernetes.io/metadata.name: ingress-nginx
     ports:
     - protocol: TCP
       port: 8080
@@ -124,11 +124,11 @@ spec:
     - protocol: TCP
       port: 6379
 ---
-# 6. Allow Envoy Gateway to reach the cert-manager solver pods
+# Allow Nginx Ingress to reach the cert-manager solver pods
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: allow-gateway-ingress-to-cert-manager
+  name: allow-ingress-to-cert-manager
   namespace: prod
 spec:
   podSelector:
@@ -140,8 +140,7 @@ spec:
   - from:
     - namespaceSelector:
         matchLabels:
-          kubernetes.io/metadata.name: envoy-gateway-system # Ensure this matches your Envoy Gateway namespace
+          kubernetes.io/metadata.name: ingress-nginx # Ensure this matches your nginx namespace
     ports:
     - protocol: TCP
       port: 8089 # cert-manager solver usually listens on 8089 or 80
-

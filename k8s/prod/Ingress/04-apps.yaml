@@ -1,0 +1,190 @@
+# --- AUTH SERVICE ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth
+  namespace: prod
+spec:
+  ports:
+    - port: 4000
+  selector:
+    app: auth
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth
+  namespace: prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: auth
+  template:
+    metadata:
+      labels:
+        app: auth
+    spec:
+      restartPolicy: Always
+      # Init Containers to wait for Infra
+      initContainers:
+      - name: wait-for-redis
+        image: busybox:1.28
+        command: [ "sh", "-c", "until nc -vz cache 6379; do echo waiting for redis; sleep 2; done;" ]
+      containers:
+      - name: auth
+        image: kabbo06/inventory-auth:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4000
+        env:
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: inventory-secrets
+              key: MONGO_URI
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: inventory-secrets
+              key: REDIS_PASSWORD
+        startupProbe:
+          tcpSocket: { port: 4000 }
+          failureThreshold: 15
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket: { port: 4000 }
+          initialDelaySeconds: 2
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: { port: 4000 }
+          initialDelaySeconds: 5
+          periodSeconds: 15
+        resources:
+          limits: { memory: "256Mi", cpu: "500m" }
+          requests: { memory: "128Mi", cpu: "100m" }
+---
+# --- INVENTORY (BACKEND) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: prod
+spec:
+  ports:
+    - port: 5000
+  selector:
+    app: backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      restartPolicy: Always
+      initContainers:
+      - name: wait-for-redis
+        image: busybox:1.28
+        command: [ "sh", "-c", "until nc -vz cache 6379; do echo waiting for redis; sleep 2; done;" ]
+      containers:
+      - name: backend
+        image: kabbo06/inventory-backend:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: inventory-secrets
+              key: MONGO_URI
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: inventory-secrets
+              key: REDIS_PASSWORD
+        startupProbe:
+          tcpSocket: { port: 5000 }
+          failureThreshold: 20
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket: { port: 5000 }
+          initialDelaySeconds: 2
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket: { port: 5000 }
+          initialDelaySeconds: 5
+          periodSeconds: 20
+        resources:
+          limits: { memory: "512Mi", cpu: "500m" }
+          requests: { memory: "256Mi", cpu: "150m" }
+---
+# --- FRONTEND (NGINX) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: prod
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      securityContext:
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+      containers:
+      - name: frontend
+        image: kabbo06/inventory-frontend:v1
+        imagePullPolicy: Always
+        env:
+        - name: SERVER_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: application-config
+              key: SERVER_NAME
+        ports:
+        - containerPort: 8080
+        startupProbe:
+          httpGet: { path: "/", port: 8080 }
+          failureThreshold: 10
+          periodSeconds: 2
+        readinessProbe:
+          httpGet: { path: "/", port: 8080 }
+          initialDelaySeconds: 2
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: { path: "/", port: 8080 }
+          initialDelaySeconds: 5
+          periodSeconds: 20
+        resources:
+          limits: { memory: "128Mi", cpu: "200m" }
+          requests: { memory: "64Mi", cpu: "50m" }
