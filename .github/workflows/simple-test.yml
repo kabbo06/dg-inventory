@@ -14,7 +14,7 @@ jobs:
       - name: Echo Hello World
         run: echo " The self-hosted runner is active and working."
       - name: List file
-        run: ls -l
+        run: ls
       - name: Read file
         run: cat README.md
 
