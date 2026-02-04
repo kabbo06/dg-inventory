@@ -10,8 +10,6 @@ jobs:
     runs-on: [self-hosted, dev]
     steps:
       - name: Echo Hello World
-        run: echo "Hello! The self-hosted runner is active and working."
-      - name: Read file
-        run: cat README.md
+        run: echo "Hi The self-hosted runner is active and working."
 
           
