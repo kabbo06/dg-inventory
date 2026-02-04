@@ -10,6 +10,6 @@ jobs:
     runs-on: [self-hosted, dev]
     steps:
       - name: Echo Hello World
-        run: echo "Hi The self-hosted runner is active and working."
+        run: echo " The self-hosted runner is active and working."
 
           
