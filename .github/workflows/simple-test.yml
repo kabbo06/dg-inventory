@@ -12,11 +12,10 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v6
       - name: Echo Hello World
-        run: echo " The self-hosted runner is active and working."
-      - name: List file
-        run: ls
-      - name: Read file
-        run: cat README.md
+        run: |
+          echo " The self-hosted runner is active and working."
+          ls -la
+          cat README.md
 
       
 
