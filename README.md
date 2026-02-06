@@ -1,4 +1,4 @@
-## 📦 Digital Inventory System (5-Tier Microservices Architecture)
+## 📦 Digital Inventory System [5-Tier Microservices Architecture]
 
 This project utilizes **HTML5, CSS3, and Vanilla JavaScript** for the lightweight presentation layer while **Node.js (Express)** powers both the Identity and Business Logic tiers. The architecture demonstrates scalable deployment patterns and distributed security coordination via a shared-secret token. To ensure enterprise readiness, the application provides full deployment support for both **Docker Compose** (for rapid local development) and **Kubernetes** (for production-grade orchestration).
 
