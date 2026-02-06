@@ -1,0 +1,73 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  # --- STAGE 1: Testing ---
+  test-auth:
+    name: Test Auth Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './auth/package-lock.json'
+
+      - name: Install & Run Tests
+        run: |
+          cd auth
+          npm install
+          npm test
+
+  test-backend:
+    name: Test Backend Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: './backend/package-lock.json'
+
+      - name: Install & Run Tests
+        run: |
+          cd backend
+          npm install
+          npm test
+
+  # --- STAGE 2: Deployment ---
+  deploy:
+    name: Deploy to Local Runner
+    needs: [test-auth, test-backend] # ONLY runs if both test jobs pass
+    runs-on: [self-hosted, dev]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Environment Variables
+        run: |
+          # This ensures your .env exists or is updated on the runner
+          # It's better to manage secrets in GitHub Actions Secrets, 
+          # but for a local compose setup, we ensure the file is present.
+          echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
+          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
+          echo "SERVER_NAME=${{ secrets.SERVER_NAME }}" >> .env
+
+      - name: Build and Restart Containers
+        run: |
+          # Use --build to ensure code changes are baked into new images
+          # Use -d to run in background
+          docker compose up -d --build
+
+      - name: Clean up unused Docker data
+        run: docker image prune -f

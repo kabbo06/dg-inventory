@@ -9,7 +9,7 @@ COPY package*.json ./
 # Use 'npm install' or 'npm ci' for production builds
 RUN npm install
 
-# Copy source code
+# Copy source code (Includes app.js and server.js)
 COPY . .
 
 # STAGE 2: Runtime Stage
@@ -24,6 +24,7 @@ RUN addgroup -S authgroup && adduser -S authuser -G authgroup
 
 # Copy from builder
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/app.js ./app.js
 COPY --from=builder /app/server.js ./server.js
 COPY --from=builder /app/package.json ./package.json
 
@@ -35,4 +36,3 @@ EXPOSE 4000
 
 # Use 'node' directly for better SIGTERM handling in K8s
 CMD ["node", "server.js"]
-
