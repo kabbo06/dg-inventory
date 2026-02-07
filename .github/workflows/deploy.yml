@@ -60,12 +60,14 @@ jobs:
           echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
           echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
           echo "SERVER_NAME=${{ vars.SERVER_NAME }}" >> .env
+          echo "MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}" >> .env
+          echo "MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}" >> .env
 
       - name: Build and Restart Containers
         run: |
           # Use --build to ensure code changes are baked into new images
           # Use -d to run in background
-          docker compose up -d --build
+          docker compose --profile dev up --build -d
 
       - name: Clean up unused Docker data
         run: docker image prune -f
