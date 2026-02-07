@@ -57,11 +57,9 @@ jobs:
       - name: Set Environment Variables
         run: |
           # This ensures your .env exists or is updated on the runner
-          # It's better to manage secrets in GitHub Actions Secrets, 
-          # but for a local compose setup, we ensure the file is present.
           echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
           echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
-          echo "SERVER_NAME=${{ secrets.SERVER_NAME }}" >> .env
+          echo "SERVER_NAME=${{ vars.SERVER_NAME }}" >> .env
 
       - name: Build and Restart Containers
         run: |
