@@ -10,7 +10,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: application-config
-  namespace: prod
+  namespace: dev
 data:
   SERVER_NAME: "inventory.example.com"
 ---
@@ -22,7 +22,7 @@ metadata:
 type: Opaque
 stringData:
   # Redis Configuration
-  REDIS_PASSWORD: "redis-password"
+  REDIS_PASSWORD: "secret_cache_pass_2026"
 
   # MongoDB Credentials
   MONGO_ROOT_USER: "admin"
@@ -30,4 +30,4 @@ stringData:
 
   # Connection String (Internal Cluster DNS)
   # Note: 'mongodb' matches the Service name
-  MONGO_URI: "mongodb URI"
+  MONGO_URI: "mongodb://admin:password@mongodb:27017/inventory_db?authSource=admin"
