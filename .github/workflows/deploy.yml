@@ -69,11 +69,41 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Restart Containers
-        run: |
-          # Use --build to ensure code changes are baked into new images
-          # Use -d to run in background
-          docker compose --profile dev up --build -d
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3    
+        
+      # --- Build Auth Image ---
+      - name: Build Auth Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth
+          load: true # Pushes the image to the local Docker daemon
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-auth:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: true
+
+      # --- Build Backend Image ---
+      - name: Build Backend Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          load: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: true
+
+      # --- Build Frontend Image ---
+      - name: Build Frontend Service
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          load: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: true   
 
       - name: Clean up unused Docker data
         run: docker image prune -f
