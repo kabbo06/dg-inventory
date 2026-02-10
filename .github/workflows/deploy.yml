@@ -78,7 +78,7 @@ jobs:
         with:
           context: ./auth
           load: true # Pushes the image to the local Docker daemon
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-auth:${{ github.sha }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-auth:v1
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
@@ -89,7 +89,7 @@ jobs:
         with:
           context: ./backend
           load: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-backend:${{ github.sha }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-backend:v1
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
@@ -100,7 +100,7 @@ jobs:
         with:
           context: ./frontend
           load: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:${{ github.sha }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:v1
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
