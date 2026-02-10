@@ -1,0 +1,52 @@
+## Edit server FQDN here
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Updated resources list: 05-ingress.yaml is removed, 05-gateway.yaml is added
+resources:
+  - 01-config.yaml
+  - 02-storage.yaml
+  - 03-issuer.yaml
+  - 04-infra.yaml
+  - 05-apps.yaml
+  - 06-gateway.yaml
+
+patches:
+  # 1. Update the Gateway Listeners
+  - target:
+      kind: Gateway
+      name: inventory-gateway
+    patch: |-
+      - op: replace
+        path: /spec/listeners/0/hostname
+        value: "dev.inventory.normalsite.com"
+      - op: replace
+        path: /spec/listeners/1/hostname
+        value: "dev.inventory.normalsite.com"
+
+  # 2. Update the HTTPS App Route
+  - target:
+      kind: HTTPRoute
+      name: inventory-app-route
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: "dev.inventory.normalsite.com"
+
+  # 3. Update the HTTP Redirect Route
+  - target:
+      kind: HTTPRoute
+      name: http-to-https-redirect
+    patch: |-
+      - op: replace
+        path: /spec/hostnames/0
+        value: "dev.inventory.normalsite.com"
+
+  # 4. Update the ConfigMap (passed to Nginx-frontend  SERVER_NAME)
+  - target:
+      kind: ConfigMap
+      name: application-config
+    patch: |-
+      - op: replace
+        path: /data/SERVER_NAME
+        value: "dev.inventory.normalsite.com"

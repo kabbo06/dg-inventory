@@ -12,7 +12,7 @@ metadata:
   name: application-config
   namespace: dev
 data:
-  SERVER_NAME: "inventory.example.com"
+  SERVER_NAME: "inventory.example.com" # Kustomize will replace this
 ---
 apiVersion: v1
 kind: Secret
@@ -21,13 +21,13 @@ metadata:
   namespace: dev
 type: Opaque
 stringData:
-  # Redis Configuration
-  REDIS_PASSWORD: "secret_cache_pass_2026"
-
+  # Redis Password (Keep it strong for Prod)
+  REDIS_PASSWORD: "redis-password"
+  
   # MongoDB Credentials
   MONGO_ROOT_USER: "admin"
-  MONGO_ROOT_PASSWORD: "password"
+  MONGO_ROOT_PASSWORD: "password"  
 
-  # Connection String (Internal Cluster DNS)
-  # Note: 'mongodb' matches the Service name
-  MONGO_URI: "mongodb://admin:password@mongodb:27017/inventory_db?authSource=admin"
+  # MongoDB Connection String
+  # We use the full URI you provided
+  MONGO_URI: "mongodb uri"

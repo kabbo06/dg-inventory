@@ -1,0 +1,16 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dev
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: rakibul@mirinfosys.com
+    privateKeySecretRef:
+      name: letsencrypt-dev
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: inventory-gateway
+                kind: Gateway

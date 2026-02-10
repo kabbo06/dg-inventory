@@ -103,7 +103,4 @@ jobs:
           tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          push: true   
-
-      - name: Clean up unused Docker data
-        run: docker image prune -f
+          push: true
