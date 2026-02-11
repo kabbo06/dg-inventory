@@ -126,7 +126,7 @@ jobs:
          sed -i "s|__MONGO_ROOT_PASSWORD__|${{ secrets.MONGO_ROOT_PASSWORD }}|g" k8s/dev/kustomization.yaml
          sed -i "s|__MONGO_URI__|${{ secrets.MONGO_URI }}|g" k8s/dev/kustomization.yaml  
       
-      - name: Deploy to Kubernetes
+      - name: Deploy to Kubernetes Cluster
         run: |
          cd k8s/dev
          
