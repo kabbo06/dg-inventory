@@ -54,15 +54,6 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
-      - name: Set Environment Variables
-        run: |
-          # This ensures your .env exists or is updated on the runner
-          echo "MONGO_URI=${{ secrets.MONGO_URI }}" > .env
-          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
-          echo "SERVER_NAME=${{ vars.SERVER_NAME }}" >> .env
-          echo "MONGO_INITDB_ROOT_USERNAME=${{ secrets.MONGO_INITDB_ROOT_USERNAME }}" >> .env
-          echo "MONGO_INITDB_ROOT_PASSWORD=${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}" >> .env
-
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
@@ -77,8 +68,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./auth
-          load: true # Pushes the image to the local Docker daemon
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-auth:v1
+          #load: true # Pushes the image to the local Docker daemon
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-auth:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
@@ -88,8 +79,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./backend
-          load: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-backend:v1
+          #load: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-backend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
@@ -99,8 +90,41 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
-          load: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:v1
+          #load: true
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
+
+      - name: Clean up unused Docker data
+        run: docker image prune -f    
+
+  # --- STAGE 3: k8s dev deployment ---
+  deploy:
+    name: DEV_Deployment
+    needs: docker   # ONLY runs if image build successfull
+    runs-on: [self-hosted, dev]
+    environment: DEV  # For accessing "DEV" env & secret
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Inject env & Secrets into Kustomize
+        run: |
+         # Using '|' as a delimiter to handle the slashes in MONGO_URI
+
+         sed -i "s|__SERVER_NAME__|${{ env.SERVER_NAME }}|g" k8s/dev/kustomization.yaml
+
+         sed -i "s|__REDIS_PASSWORD__|${{ secrets.REDIS_PASSWORD }}|g" k8s/dev/kustomization.yaml
+         sed -i "s|__MONGO_ROOT_USER__|${{ secrets.MONGO_ROOT_USER }}|g" k8s/dev/kustomization.yaml
+         sed -i "s|__MONGO_ROOT_PASSWORD__|${{ secrets.MONGO_ROOT_PASSWORD }}|g" k8s/dev/kustomization.yaml
+         sed -i "s|__MONGO_URI__|${{ secrets.MONGO_URI }}|g" k8s/dev/kustomization.yaml  
+    
+      - name: Deploy to Kubernetes
+        run: |
+         kustomize edit set image kabbo06/inventory-auth=${{ vars.DOCKERHUB_USERNAME }}/inventory-auth:${{ github.sha }}
+         kustomize edit set image kabbo06/inventory-backend=${{ vars.DOCKERHUB_USERNAME }}/inventory-backend:${{ github.sha }}
+         kustomize edit set image kabbo06/inventory-frontend=${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:${{ github.sha }}
+    
+         kubectl apply -k k8s/dev   
+    

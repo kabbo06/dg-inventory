@@ -19,10 +19,10 @@ patches:
     patch: |-
       - op: replace
         path: /spec/listeners/0/hostname
-        value: "dev.inventory.normalsite.com"
+        value: "__SERVER_NAME__"
       - op: replace
         path: /spec/listeners/1/hostname
-        value: "dev.inventory.normalsite.com"
+        value: "__SERVER_NAME__"
 
   # 2. Update the HTTPS App Route
   - target:
@@ -31,7 +31,7 @@ patches:
     patch: |-
       - op: replace
         path: /spec/hostnames/0
-        value: "dev.inventory.normalsite.com"
+        value: "__SERVER_NAME__"
 
   # 3. Update the HTTP Redirect Route
   - target:
@@ -40,7 +40,7 @@ patches:
     patch: |-
       - op: replace
         path: /spec/hostnames/0
-        value: "dev.inventory.normalsite.com"
+        value: "__SERVER_NAME__"
 
   # 4. Update the ConfigMap (passed to Nginx-frontend  SERVER_NAME)
   - target:
@@ -49,4 +49,22 @@ patches:
     patch: |-
       - op: replace
         path: /data/SERVER_NAME
-        value: "dev.inventory.normalsite.com"
+        value: "__SERVER_NAME__"
+
+  # 5. Update the Secret 
+  - target:
+      kind: Secret
+      name: inventory-secrets
+    patch: |-
+      - op: replace
+        path: /stringData/REDIS_PASSWORD
+        value: "__REDIS_PASSWORD__"
+      - op: replace
+        path: /stringData/MONGO_ROOT_USER
+        value: "__MONGO_ROOT_USER__"
+      - op: replace
+        path: /stringData/MONGO_ROOT_PASSWORD
+        value: "__MONGO_ROOT_PASSWORD__"
+      - op: replace
+        path: /stringData/MONGO_URI
+        value: "__MONGO_URI__"      

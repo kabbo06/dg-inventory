@@ -35,8 +35,8 @@ spec:
         command: [ "sh", "-c", "until nc -vz mongodb 27017; do echo waiting for mongodb; sleep 2; done;" ]
       containers:
       - name: auth
-        image: kabbo06/inventory-auth:v1
-        imagePullPolicy: Always
+        image: kabbo06/inventory-auth
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 4000
         env:
@@ -102,8 +102,8 @@ spec:
         command: [ "sh", "-c", "until nc -vz mongodb 27017; do echo waiting for mongodb; sleep 2; done;" ]
       containers:
       - name: backend
-        image: kabbo06/inventory-backend:v1
-        imagePullPolicy: Always
+        image: kabbo06/inventory-backend
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
         env:
@@ -166,8 +166,8 @@ spec:
         fsGroup: 101
       containers:
       - name: frontend
-        image: kabbo06/inventory-frontend:v1
-        imagePullPolicy: Always
+        image: kabbo06/inventory-frontend
+        imagePullPolicy: IfNotPresent
         env:
         - name: SERVER_NAME
           valueFrom:
