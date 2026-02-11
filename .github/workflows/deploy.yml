@@ -125,12 +125,14 @@ jobs:
          sed -i "s|__MONGO_ROOT_USER__|${{ secrets.MONGO_ROOT_USER }}|g" k8s/dev/kustomization.yaml
          sed -i "s|__MONGO_ROOT_PASSWORD__|${{ secrets.MONGO_ROOT_PASSWORD }}|g" k8s/dev/kustomization.yaml
          sed -i "s|__MONGO_URI__|${{ secrets.MONGO_URI }}|g" k8s/dev/kustomization.yaml  
-    
+      
       - name: Deploy to Kubernetes
         run: |
+         cd k8s/dev
+         
          kustomize edit set image kabbo06/inventory-auth=${{ vars.DOCKERHUB_USERNAME }}/inventory-auth:${{ github.sha }}
          kustomize edit set image kabbo06/inventory-backend=${{ vars.DOCKERHUB_USERNAME }}/inventory-backend:${{ github.sha }}
          kustomize edit set image kabbo06/inventory-frontend=${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:${{ github.sha }}
     
-         kubectl apply -k k8s/dev   
+         kubectl apply -k . 
     
