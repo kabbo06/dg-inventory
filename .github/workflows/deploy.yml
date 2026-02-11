@@ -109,6 +109,12 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v6
 
+      - name: Set Kubernetes Context
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}  
+
       - name: Inject env & Secrets into Kustomize
         run: |
          # Using '|' as a delimiter to handle the slashes in MONGO_URI
