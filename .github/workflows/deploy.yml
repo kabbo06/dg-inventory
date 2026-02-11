@@ -119,7 +119,7 @@ jobs:
         run: |
          # Using '|' as a delimiter to handle the slashes in MONGO_URI
 
-         sed -i "s|__SERVER_NAME__|${{ env.SERVER_NAME }}|g" k8s/dev/kustomization.yaml
+         sed -i "s|__SERVER_NAME__|${{ vars.SERVER_NAME }}|g" k8s/dev/kustomization.yaml
 
          sed -i "s|__REDIS_PASSWORD__|${{ secrets.REDIS_PASSWORD }}|g" k8s/dev/kustomization.yaml
          sed -i "s|__MONGO_ROOT_USER__|${{ secrets.MONGO_ROOT_USER }}|g" k8s/dev/kustomization.yaml
