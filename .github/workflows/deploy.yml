@@ -100,7 +100,7 @@ jobs:
         run: docker image prune -f    
 
   # --- STAGE 3: k8s dev deployment ---
-  deploy:
+  dev-deploy:
     name: DEV_Deployment
     needs: docker   # ONLY runs if image build successfull
     runs-on: [self-hosted, dev]
@@ -135,4 +135,20 @@ jobs:
          kustomize edit set image kabbo06/inventory-frontend=${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:${{ github.sha }}
     
          kubectl apply -k . 
+
+  # --- STAGE 3: k8s dev deployment ---
+  integration-testing:
+    name: Dev Integration Testing
+    needs: dev-deploy
+    runs-on: ubuntu-latest
+    environment: DEV  # For accessing "DEV" env & secret
+    steps:
+      - name: Dev Endpoint Check
+        run: |
+         echo ${{ vars.SERVER_NAME }}
+         echo "-------------------------------------------------------------------"
+         curl https://${{ vars.SERVER_NAME }} -s -k | jq -r .status | grep -i live
+
+      
+
     
