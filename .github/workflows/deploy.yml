@@ -139,15 +139,34 @@ jobs:
   # --- STAGE 3: k8s dev deployment ---
   integration-testing:
     name: Dev Integration Testing
-    needs: dev-deploy
+    needs: dev-deploy 
     runs-on: ubuntu-latest
-    environment: DEV  # For accessing "DEV" env & secret
+    environment: DEV
     steps:
       - name: Dev Endpoint Check
         run: |
-         echo ${{ vars.SERVER_NAME }}
-         echo "-------------------------------------------------------------------"
-         curl https://${{ vars.SERVER_NAME }} -s -k | jq -r .status | grep -i live
+          echo "Checking: https://${{ vars.SERVER_NAME }}"
+          
+          # 1. Fetch the response and the HTTP status code
+          RESPONSE=$(curl -s -k https://${{ vars.SERVER_NAME }})
+          HTTP_CODE=$(curl -s -k -o /dev/null -w "%{http_code}" https://${{ vars.SERVER_NAME }})
+          
+          echo "HTTP Status Code: $HTTP_CODE"
+          echo "Raw Response: $RESPONSE"
+          
+          # 2. Verify we got a 200 OK
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Error: Server returned $HTTP_CODE instead of 200"
+            exit 1
+          fi
+
+          # 3. Flexible check: Check if 'live' exists in the response (works for JSON or text)
+          if echo "$RESPONSE" | grep -iq "live"; then
+            echo "SUCCESS: Application is live!"
+          else
+            echo "FAILURE: 'live' status not found in response."
+            exit 1
+          fi
 
       
 
