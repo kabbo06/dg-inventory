@@ -147,12 +147,11 @@ jobs:
         run: |
           echo "Checking: https://${{ vars.SERVER_NAME }}"
           
-          # 1. Fetch the response and the HTTP status code
+          # 1. Fetch the response
           RESPONSE=$(curl -s -k https://${{ vars.SERVER_NAME }})
           HTTP_CODE=$(curl -s -k -o /dev/null -w "%{http_code}" https://${{ vars.SERVER_NAME }})
           
           echo "HTTP Status Code: $HTTP_CODE"
-          echo "Raw Response: $RESPONSE"
           
           # 2. Verify we got a 200 OK
           if [ "$HTTP_CODE" -ne 200 ]; then
@@ -160,11 +159,12 @@ jobs:
             exit 1
           fi
 
-          # 3. Flexible check: Check if 'live' exists in the response (works for JSON or text)
-          if echo "$RESPONSE" | grep -iq "live"; then
-            echo "SUCCESS: Application is live!"
+          # 3. Check for a string that EXISTS in your HTML (like "Inventory Login")
+          if echo "$RESPONSE" | grep -iq "Inventory Login"; then
+            echo "SUCCESS: Frontend is reachable and serving the login page!"
           else
-            echo "FAILURE: 'live' status not found in response."
+            echo "FAILURE: Could not verify the page content."
+            echo "Raw Response snippet: $(echo $RESPONSE | head -c 100)..."
             exit 1
           fi
 
