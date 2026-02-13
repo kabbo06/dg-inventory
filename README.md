@@ -4,11 +4,21 @@ This project utilizes **HTML5, CSS3, and Vanilla JavaScript** for the lightweigh
 
 ---
 
-## 🏗 System Architecture Diagram
+## 🏗 Application Architecture Diagram
 
 <div align="center">
 
 ![](/images/img01.jpg)
+
+</div>
+
+---
+
+## 🏗 GitHub Action CI/CD  Workflow Diagram
+
+<div align="center">
+
+![](/images/img02.jpg)
 
 </div>
 
