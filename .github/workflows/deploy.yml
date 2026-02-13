@@ -117,14 +117,17 @@ jobs:
 
       - name: Inject ENV & Secrets into Kustomize
         run: |
-         # Using '|' as a delimiter to handle the slashes in MONGO_URI
+         # 1. Escape ampersands (&) and special char for the sed command
+          ESCAPED_MONGO_URI=$(echo "${{ secrets.MONGO_URI }}" | sed 's/&/\\&/g')
+          ESCAPED_MONGO_ROOT_PASSWORD=$(echo "${{ secrets.MONGO_ROOT_PASSWORD }}" | sed 's/|/\\|/g')
+          
+          # 2. Inject values using '|' as a delimiter
+          sed -i "s|__MONGO_URI__|$ESCAPED_MONGO_URI|g" k8s/dev/kustomization.yaml
+          sed -i "s|__MONGO_ROOT_PASSWORD__|$ESCAPED_MONGO_ROOT_PASSWORD|g" k8s/dev/kustomization.yaml
 
-         sed -i "s|__SERVER_NAME__|${{ vars.SERVER_NAME }}|g" k8s/dev/kustomization.yaml
-
-         sed -i "s|__REDIS_PASSWORD__|${{ secrets.REDIS_PASSWORD }}|g" k8s/dev/kustomization.yaml
-         sed -i "s|__MONGO_ROOT_USER__|${{ secrets.MONGO_ROOT_USER }}|g" k8s/dev/kustomization.yaml
-         sed -i "s|__MONGO_ROOT_PASSWORD__|${{ secrets.MONGO_ROOT_PASSWORD }}|g" k8s/dev/kustomization.yaml
-         sed -i "s|__MONGO_URI__|${{ secrets.MONGO_URI }}|g" k8s/dev/kustomization.yaml  
+          sed -i "s|__SERVER_NAME__|${{ vars.SERVER_NAME }}|g" k8s/dev/kustomization.yaml
+          sed -i "s|__REDIS_PASSWORD__|${{ secrets.REDIS_PASSWORD }}|g" k8s/dev/kustomization.yaml
+          sed -i "s|__MONGO_ROOT_USER__|${{ secrets.MONGO_ROOT_USER }}|g" k8s/dev/kustomization.yaml
       
       - name: Deploy to Kubernetes dev Cluster
         run: |
@@ -187,12 +190,13 @@ jobs:
 
       - name: Inject ENV & Secrets into Kustomize
         run: |
-         # Using '|' as a delimiter to handle the slashes in MONGO_URI
+          # 1. Escape ampersands for PROD Atlas URI
+          ESCAPED_MONGO_URI=$(echo "${{ secrets.MONGO_URI }}" | sed 's/&/\\&/g')
 
-         sed -i "s|__SERVER_NAME__|${{ vars.SERVER_NAME }}|g" k8s/prod/kustomization.yaml
-
-         sed -i "s|__REDIS_PASSWORD__|${{ secrets.REDIS_PASSWORD }}|g" k8s/prod/kustomization.yaml
-         sed -i "s|__MONGO_URI__|${{ secrets.MONGO_URI }}|g" k8s/prod/kustomization.yaml  
+          # 2. Inject values using '|' as a delimiter
+          sed -i "s|__MONGO_URI__|$ESCAPED_MONGO_URI|g" k8s/prod/kustomization.yaml
+          sed -i "s|__SERVER_NAME__|${{ vars.SERVER_NAME }}|g" k8s/prod/kustomization.yaml
+          sed -i "s|__REDIS_PASSWORD__|${{ secrets.REDIS_PASSWORD }}|g" k8s/prod/kustomization.yaml 
       
       - name: Deploy to Kubernetes prod Cluster
         run: |
