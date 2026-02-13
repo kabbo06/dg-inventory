@@ -22,8 +22,8 @@ metadata:
 type: Opaque
 stringData:
   # Redis Password (Keep it strong for Prod)
-  REDIS_PASSWORD: "redis-password"
+  REDIS_PASSWORD: "redis-password" # Kustomize will replace this
 
   # MongoDB Atlas Connection String
   # We use the full URI you provided
-  MONGO_URI: "mongodb+srv uri"
+  MONGO_URI: "mongodb+srv uri" # Kustomize will replace this

@@ -33,8 +33,8 @@ spec:
         command: [ "sh", "-c", "until nc -vz cache 6379; do echo waiting for redis; sleep 2; done;" ]
       containers:
       - name: auth
-        image: kabbo06/inventory-auth:v1
-        imagePullPolicy: Always
+        image: kabbo06/inventory-auth
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 4000
         env:
@@ -48,17 +48,18 @@ spec:
             secretKeyRef:
               name: inventory-secrets
               key: REDIS_PASSWORD
+        # --- UPDATED PROBES ---
         startupProbe:
-          tcpSocket: { port: 4000 }
+          httpGet: { path: "/auth/health", port: 4000 }
           failureThreshold: 15
           periodSeconds: 5
         readinessProbe:
-          tcpSocket: { port: 4000 }
+          httpGet: { path: "/auth/health", port: 4000 }
           initialDelaySeconds: 2
           periodSeconds: 5
         livenessProbe:
-          tcpSocket: { port: 4000 }
-          initialDelaySeconds: 5
+          httpGet: { path: "/auth/health", port: 4000 }
+          initialDelaySeconds: 10
           periodSeconds: 15
         resources:
           limits: { memory: "256Mi", cpu: "500m" }
@@ -98,8 +99,8 @@ spec:
         command: [ "sh", "-c", "until nc -vz cache 6379; do echo waiting for redis; sleep 2; done;" ]
       containers:
       - name: backend
-        image: kabbo06/inventory-backend:v1
-        imagePullPolicy: Always
+        image: kabbo06/inventory-backend
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
         env:
@@ -113,17 +114,18 @@ spec:
             secretKeyRef:
               name: inventory-secrets
               key: REDIS_PASSWORD
+        # --- UPDATED PROBES ---
         startupProbe:
-          tcpSocket: { port: 5000 }
+          httpGet: { path: "/api/products/health", port: 5000 }
           failureThreshold: 20
           periodSeconds: 5
         readinessProbe:
-          tcpSocket: { port: 5000 }
+          httpGet: { path: "/api/products/health", port: 5000 }
           initialDelaySeconds: 2
           periodSeconds: 5
         livenessProbe:
-          tcpSocket: { port: 5000 }
-          initialDelaySeconds: 5
+          httpGet: { path: "/api/products/health", port: 5000 }
+          initialDelaySeconds: 10
           periodSeconds: 20
         resources:
           limits: { memory: "512Mi", cpu: "500m" }
@@ -163,8 +165,8 @@ spec:
         fsGroup: 101
       containers:
       - name: frontend
-        image: kabbo06/inventory-frontend:v1
-        imagePullPolicy: Always
+        image: kabbo06/inventory-frontend
+        imagePullPolicy: IfNotPresent
         env:
         - name: SERVER_NAME
           valueFrom:

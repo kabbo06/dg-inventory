@@ -99,9 +99,9 @@ jobs:
       - name: Clean up unused Docker data
         run: docker image prune -f    
 
-  # --- STAGE 3: k8s dev deployment ---
+  # --- STAGE 3: k8s DEV Deployment ---
   dev-deploy:
-    name: DEV_Deployment
+    name: DEV Deployment
     needs: docker   # ONLY runs if image build successfull
     runs-on: [self-hosted, dev]
     environment: DEV  # For accessing "DEV" env & secret
@@ -115,7 +115,7 @@ jobs:
           method: kubeconfig
           kubeconfig: ${{ secrets.KUBECONFIG }}  
 
-      - name: Inject env & Secrets into Kustomize
+      - name: Inject ENV & Secrets into Kustomize
         run: |
          # Using '|' as a delimiter to handle the slashes in MONGO_URI
 
@@ -126,7 +126,7 @@ jobs:
          sed -i "s|__MONGO_ROOT_PASSWORD__|${{ secrets.MONGO_ROOT_PASSWORD }}|g" k8s/dev/kustomization.yaml
          sed -i "s|__MONGO_URI__|${{ secrets.MONGO_URI }}|g" k8s/dev/kustomization.yaml  
       
-      - name: Deploy to Kubernetes Cluster
+      - name: Deploy to Kubernetes dev Cluster
         run: |
          cd k8s/dev
          
@@ -136,7 +136,7 @@ jobs:
     
          kubectl apply -k . 
 
-  # --- STAGE 4: k8s dev integration-testing ---
+  # --- STAGE 4: k8s DEV Integration-Testing ---
   dev-integration-testing:
     name: Dev Integration Testing
     needs: dev-deploy 
@@ -169,6 +169,75 @@ jobs:
           echo "Final Response: $RESPONSE"
           exit 1
 
-      
+  # --- STAGE 5: k8s PROD Deployment ---
+  prod-deploy:
+    name: PROD Deployment
+    needs: dev-integration-testing
+    runs-on: [self-hosted, dev]
+    environment: PROD  # For accessing "PROD" env & secret
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
 
+      - name: Set Kubernetes Context
+        uses: azure/k8s-set-context@v4
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}  
+
+      - name: Inject ENV & Secrets into Kustomize
+        run: |
+         # Using '|' as a delimiter to handle the slashes in MONGO_URI
+
+         sed -i "s|__SERVER_NAME__|${{ vars.SERVER_NAME }}|g" k8s/prod/kustomization.yaml
+
+         sed -i "s|__REDIS_PASSWORD__|${{ secrets.REDIS_PASSWORD }}|g" k8s/prod/kustomization.yaml
+         sed -i "s|__MONGO_URI__|${{ secrets.MONGO_URI }}|g" k8s/prod/kustomization.yaml  
+      
+      - name: Deploy to Kubernetes prod Cluster
+        run: |
+         cd k8s/prod
+         
+         kustomize edit set image kabbo06/inventory-auth=${{ vars.DOCKERHUB_USERNAME }}/inventory-auth:${{ github.sha }}
+         kustomize edit set image kabbo06/inventory-backend=${{ vars.DOCKERHUB_USERNAME }}/inventory-backend:${{ github.sha }}
+         kustomize edit set image kabbo06/inventory-frontend=${{ vars.DOCKERHUB_USERNAME }}/inventory-frontend:${{ github.sha }}
+
+         kustomize edit set replicas auth=${{ vars.REPLICAS }}
+         kustomize edit set replicas backend=${{ vars.REPLICAS }}
+         kustomize edit set replicas frontend=${{ vars.REPLICAS }}
     
+         kubectl apply -k . 
+
+  # --- STAGE 6: k8s PROD Integration-Testing ---
+  prod-integration-testing:
+    name: PROD Integration Testing
+    needs: prod-deploy
+    runs-on: ubuntu-latest
+    environment: PROD
+    steps:
+      - name: prod Backend Deep Health Check
+        run: |
+          echo "Checking Deep Health: https://${{ vars.SERVER_NAME }}/api/products/health"
+          
+          # Increased wait time: 18 attempts * 5 seconds = 90 seconds total
+          for i in {1..18}; do
+            # Added --max-time to ensure curl doesn't hang the runner
+            RESPONSE=$(curl -s -k --max-time 10 https://${{ vars.SERVER_NAME }}/api/products/health)
+            
+            # Extracting status using jq
+            STATUS=$(echo $RESPONSE | jq -r '.status' 2>/dev/null || echo "connecting")
+            
+            if [ "$STATUS" == "live" ]; then
+              echo "SUCCESS: Backend and Databases are LIVE!"
+              echo $RESPONSE | jq .
+              exit 0
+            fi
+            
+            echo "Waiting for services... Attempt $i/18 (Status: $STATUS)"
+            sleep 5
+          done
+
+          echo "FAILURE: Backend health check timed out after 90s or reported unhealthy."
+          echo "Final Response: $RESPONSE"
+          exit 1          
+ 
