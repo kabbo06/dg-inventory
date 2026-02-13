@@ -18,7 +18,7 @@ This project utilizes **HTML5, CSS3, and Vanilla JavaScript** for the lightweigh
 
 <div align="center">
 
-![](/images/img02.jpg)
+![](/images/img02.png)
 
 </div>
 
