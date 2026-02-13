@@ -50,17 +50,18 @@ spec:
             secretKeyRef:
               name: inventory-secrets
               key: REDIS_PASSWORD
+        # --- UPDATED PROBES ---
         startupProbe:
-          tcpSocket: { port: 4000 }
+          httpGet: { path: "/auth/health", port: 4000 }
           failureThreshold: 15
           periodSeconds: 5
         readinessProbe:
-          tcpSocket: { port: 4000 }
+          httpGet: { path: "/auth/health", port: 4000 }
           initialDelaySeconds: 2
           periodSeconds: 5
         livenessProbe:
-          tcpSocket: { port: 4000 }
-          initialDelaySeconds: 5
+          httpGet: { path: "/auth/health", port: 4000 }
+          initialDelaySeconds: 10
           periodSeconds: 15
         resources:
           limits: { memory: "256Mi", cpu: "500m" }
@@ -117,17 +118,18 @@ spec:
             secretKeyRef:
               name: inventory-secrets
               key: REDIS_PASSWORD
+        # --- UPDATED PROBES ---
         startupProbe:
-          tcpSocket: { port: 5000 }
+          httpGet: { path: "/api/products/health", port: 5000 }
           failureThreshold: 20
           periodSeconds: 5
         readinessProbe:
-          tcpSocket: { port: 5000 }
+          httpGet: { path: "/api/products/health", port: 5000 }
           initialDelaySeconds: 2
           periodSeconds: 5
         livenessProbe:
-          tcpSocket: { port: 5000 }
-          initialDelaySeconds: 5
+          httpGet: { path: "/api/products/health", port: 5000 }
+          initialDelaySeconds: 10
           periodSeconds: 20
         resources:
           limits: { memory: "512Mi", cpu: "500m" }

@@ -64,6 +64,30 @@ async function initAuth() {
 }
 
 // 4. API Endpoints
+
+// --- HEALTH CHECK ENDPOINT ---
+// Reachable at: https://${SERVER_NAME}/api/auth/health
+app.get('/auth/health', async (req, res) => {
+    const mongoStatus = mongoose.connection.readyState === 1 ? 'up' : 'down';
+    let redisStatus = 'down';
+    
+    try {
+        const ping = await redisClient.ping();
+        if (ping === 'PONG') redisStatus = 'up';
+    } catch (e) {
+        redisStatus = 'down';
+    }
+
+    const isLive = mongoStatus === 'up' && redisStatus === 'up';
+    
+    res.status(isLive ? 200 : 503).json({
+        status: isLive ? 'live' : 'unhealthy',
+        database: mongoStatus,
+        cache: redisStatus,
+        timestamp: new Date().toISOString()
+    });
+});
+
 app.post('/auth/login', async (req, res) => {
     const { username, password } = req.body;
     try {
@@ -74,7 +98,7 @@ app.post('/auth/login', async (req, res) => {
             // Note: Fallback secret added only for testing environments
             const token = jwt.sign(
                 { username: user.username },
-                dynamicSecret || 'test_secret_only', 
+                dynamicSecret || 'test_secret_only',
                 { expiresIn: '8h' }
             );
             res.json({ token });

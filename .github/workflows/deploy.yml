@@ -136,37 +136,38 @@ jobs:
     
          kubectl apply -k . 
 
-  # --- STAGE 3: k8s dev deployment ---
-  integration-testing:
+  # --- STAGE 4: k8s dev integration-testing ---
+  dev-integration-testing:
     name: Dev Integration Testing
     needs: dev-deploy 
     runs-on: ubuntu-latest
     environment: DEV
     steps:
-      - name: Dev Endpoint Check
+      - name: Dev Backend Deep Health Check
         run: |
-          echo "Checking: https://${{ vars.SERVER_NAME }}"
+          echo "Checking Deep Health: https://${{ vars.SERVER_NAME }}/api/products/health"
           
-          # 1. Fetch the response
-          RESPONSE=$(curl -s -k https://${{ vars.SERVER_NAME }})
-          HTTP_CODE=$(curl -s -k -o /dev/null -w "%{http_code}" https://${{ vars.SERVER_NAME }})
-          
-          echo "HTTP Status Code: $HTTP_CODE"
-          
-          # 2. Verify we got a 200 OK
-          if [ "$HTTP_CODE" -ne 200 ]; then
-            echo "Error: Server returned $HTTP_CODE instead of 200"
-            exit 1
-          fi
+          # Increased wait time: 18 attempts * 5 seconds = 90 seconds total
+          for i in {1..18}; do
+            # Added --max-time to ensure curl doesn't hang the runner
+            RESPONSE=$(curl -s -k --max-time 10 https://${{ vars.SERVER_NAME }}/api/products/health)
+            
+            # Extracting status using jq
+            STATUS=$(echo $RESPONSE | jq -r '.status' 2>/dev/null || echo "connecting")
+            
+            if [ "$STATUS" == "live" ]; then
+              echo "SUCCESS: Backend and Databases are LIVE!"
+              echo $RESPONSE | jq .
+              exit 0
+            fi
+            
+            echo "Waiting for services... Attempt $i/18 (Status: $STATUS)"
+            sleep 5
+          done
 
-          # 3. Check for a string that EXISTS in your HTML (like "Inventory Login")
-          if echo "$RESPONSE" | grep -iq "Inventory Login"; then
-            echo "SUCCESS: Frontend is reachable and serving the login page!"
-          else
-            echo "FAILURE: Could not verify the page content."
-            echo "Raw Response snippet: $(echo $RESPONSE | head -c 100)..."
-            exit 1
-          fi
+          echo "FAILURE: Backend health check timed out after 90s or reported unhealthy."
+          echo "Final Response: $RESPONSE"
+          exit 1
 
       
 

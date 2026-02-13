@@ -74,6 +74,29 @@ const verifyToken = async (req, res, next) => {
 
 // --- PRODUCT ROUTES ---
 
+// --- HEALTH CHECK (Placed BEFORE verifyToken) ---
+// Reachable at: https://${SERVER_NAME}/api/products/health
+app.get('/api/products/health', async (req, res) => {
+    const mongoStatus = mongoose.connection.readyState === 1 ? 'up' : 'down';
+    let redisStatus = 'down';
+    
+    try {
+        // Checking if the shared secret exists in Redis as a health indicator
+        const secretExists = await redisClient.get('system_jwt_secret');
+        redisStatus = secretExists ? 'up' : 'initializing';
+    } catch (e) {
+        redisStatus = 'down';
+    }
+
+    const isLive = mongoStatus === 'up' && redisStatus === 'up';
+
+    res.status(isLive ? 200 : 503).json({
+        status: isLive ? 'live' : 'unhealthy',
+        database: mongoStatus,
+        cache: redisStatus
+    });
+});
+
 app.get('/api/products', verifyToken, async (req, res) => {
     const { search } = req.query;
     try {
