@@ -134,36 +134,12 @@ jobs:
   dev-integration-testing:
     name: Dev Integration Testing
     needs: dev-deploy 
-    runs-on: ubuntu-latest
-    environment: DEV
-    steps:
-      - name: Dev Backend Deep Health Check
-        run: |
-          echo "Checking Deep Health: https://${{ vars.SERVER_NAME }}/api/products/health"
-          
-          # Increased wait time: 18 attempts * 5 seconds = 90 seconds total
-          for i in {1..18}; do
-            # Added --max-time to ensure curl doesn't hang the runner
-            RESPONSE=$(curl -s -k --max-time 10 https://${{ vars.SERVER_NAME }}/api/products/health)
-            
-            # Extracting status using jq
-            STATUS=$(echo $RESPONSE | jq -r '.status' 2>/dev/null || echo "connecting")
-            
-            if [ "$STATUS" == "live" ]; then
-              echo "SUCCESS: Backend and Databases are LIVE!"
-              echo $RESPONSE | jq .
-              exit 0
-            fi
-            
-            echo "Waiting for services... Attempt $i/18 (Status: $STATUS)"
-            sleep 5
-          done
+    uses: ./.github/workflows/reusable-health-check.yml
+    with:
+      environment: DEV
+      server_url: ${{ vars.SERVER_NAME }}
 
-          echo "FAILURE: Backend health check timed out after 90s or reported unhealthy."
-          echo "Final Response: $RESPONSE"
-          exit 1
-
-  # --- STAGE 5: k8s PROD Deployment & Integration-Testing ---
+  # --- STAGE 5: k8s PROD Deployment ---
   prod-deploy:
     name: PROD Deployment
     needs: dev-integration-testing
@@ -207,36 +183,11 @@ jobs:
   prod-integration-testing:
     name: PROD Integration Testing
     needs: prod-deploy
-    runs-on: ubuntu-latest
-    environment: PROD
-    continue-on-error: true
-    steps:
-      - name: prod Backend Deep Health Check
-        run: |
-          echo "Checking Deep Health: https://${{ vars.SERVER_NAME }}/api/products/health"
-          
-          # Increased wait time: 18 attempts * 5 seconds = 90 seconds total
-          for i in {1..18}; do
-            # Added --max-time to ensure curl doesn't hang the runner
-            RESPONSE=$(curl -s -k --max-time 10 https://${{ vars.SERVER_NAME }}/api/products/health)
-            
-            # Extracting status using jq
-            STATUS=$(echo $RESPONSE | jq -r '.status' 2>/dev/null || echo "connecting")
-            
-            if [ "$STATUS" == "live" ]; then
-              echo "SUCCESS: Backend and Databases are LIVE!"
-              echo $RESPONSE | jq .
-              exit 0
-            fi
-            
-            echo "Waiting for services... Attempt $i/18 (Status: $STATUS)"
-            sleep 5
-          done
-
-          echo "FAILURE: Backend health check timed out after 90s or reported unhealthy."
-          echo "Final Response: $RESPONSE"
-          exit 1      
- 
+    uses: ./.github/workflows/reusable-health-check.yml
+    with:
+      environment: PROD
+      server_url: ${{ vars.SERVER_NAME }}
+       
   # --- STAGE 7: Undo PROD Deployments if Fails---   
   prod-rollback:
     name: PROD Rollback

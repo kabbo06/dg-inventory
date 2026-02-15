@@ -1,0 +1,38 @@
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      server_url:
+        required: true
+        type: string
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Deep Health Check
+        run: |
+          echo "Checking Deep Health: https://${{ inputs.server_url }}/api/products/health"
+          # Increased wait time: 18 attempts * 5 seconds = 90 seconds total
+          for i in {1..18}; do
+            # Added --max-time to ensure curl doesn't hang the runner
+            RESPONSE=$(curl -s -k --max-time 10 https://${{ inputs.server_url }}/api/products/health)
+
+            # Extracting status using jq
+            STATUS=$(echo $RESPONSE | jq -r '.status' 2>/dev/null || echo "connecting")
+            
+            if [ "$STATUS" == "live" ]; then
+              echo "SUCCESS: $ENVIRONMENT is LIVE!"
+              echo $RESPONSE | jq .
+              exit 0
+            fi
+            echo "Waiting for services... Attempt $i/18 (Status: $STATUS)"
+            sleep 5
+          done
+
+          echo "FAILURE: Health check timed out after 90s or reported unhealthy."
+          echo "Final Response: $RESPONSE"
+          exit 1
