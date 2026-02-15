@@ -137,7 +137,6 @@ jobs:
     uses: ./.github/workflows/reusable-health-check.yml
     with:
       environment: DEV
-      server_url: ${{ vars.SERVER_NAME }}
 
   # --- STAGE 5: k8s PROD Deployment ---
   prod-deploy:
@@ -186,7 +185,6 @@ jobs:
     uses: ./.github/workflows/reusable-health-check.yml
     with:
       environment: PROD
-      server_url: ${{ vars.SERVER_NAME }}
        
   # --- STAGE 7: Undo PROD Deployments if Fails---   
   prod-rollback:

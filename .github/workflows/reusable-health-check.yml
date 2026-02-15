@@ -4,9 +4,6 @@ on:
       environment:
         required: true
         type: string
-      server_url:
-        required: true
-        type: string
 
 jobs:
   health-check:
@@ -15,11 +12,11 @@ jobs:
     steps:
       - name: Deep Health Check
         run: |
-          echo "Checking Deep Health: https://${{ inputs.server_url }}/api/products/health"
+          echo "Checking Deep Health: https://${{ vars.SERVER_NAME }}/api/products/health"
           # Increased wait time: 18 attempts * 5 seconds = 90 seconds total
           for i in {1..18}; do
             # Added --max-time to ensure curl doesn't hang the runner
-            RESPONSE=$(curl -s -k --max-time 10 https://${{ inputs.server_url }}/api/products/health)
+            RESPONSE=$(curl -s -k --max-time 10 https://${{ vars.SERVER_NAME }}/api/products/health)
 
             # Extracting status using jq
             STATUS=$(echo $RESPONSE | jq -r '.status' 2>/dev/null || echo "connecting")
