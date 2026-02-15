@@ -22,7 +22,7 @@ jobs:
             STATUS=$(echo $RESPONSE | jq -r '.status' 2>/dev/null || echo "connecting")
             
             if [ "$STATUS" == "live" ]; then
-              echo "SUCCESS: $ENVIRONMENT is LIVE!"
+              echo "SUCCESS: ${{ inputs.environment }} is LIVE & Healthy!"
               echo $RESPONSE | jq .
               exit 0
             fi
